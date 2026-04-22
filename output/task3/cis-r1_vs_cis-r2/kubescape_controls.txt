@@ -1,0 +1,18 @@
+C-0015 List Kubernetes secrets
+C-0016 Allow privilege escalation
+C-0030 Ingress and Egress blocked
+C-0035 Administrative Roles
+C-0036 Validate admission controller (validating)
+C-0038 Host PID/IPC privileges
+C-0041 HostNetwork access
+C-0046 Insecure capabilities
+C-0053 Access container service account
+C-0055 Linux hardening
+C-0057 Privileged container
+C-0061 Pods in default namespace
+C-0067 Audit logs enabled
+C-0068 PSP enabled
+C-0069 Disable anonymous access to Kubelet service
+C-0070 Enforce Kubelet client TLS authentication
+C-0085 Workloads with excessive amount of vulnerabilities
+C-0088 RBAC enabled

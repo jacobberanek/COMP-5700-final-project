@@ -1,0 +1,556 @@
+element1:
+  name: Enable audit Logs
+  requirements:
+  - 'Description: Control plane logs provide visibility into operation of the EKS
+    Control plane component systems. The API server'
+  - 'Impact: this Safeguard. ● ● ● Page 17 Controls Version Control IG 1 IG 2 IG 3
+    v8 8.2 Collect'
+element2:
+  name: Ensure that the kubeconfig file permissions are set to 644 or more restrictive
+  requirements:
+  - 'Description: If kubelet is running, and if it is configured by a kubeconfig file,
+    ensure that the proxy kubeconfig file has permissions of 644 or more restrictive.'
+  - 'Rationale: The kubelet kubeconfig file controls various parameters of the kubelet
+    service in the worker node. You should restrict its file permissions to maintain
+    the integrity of the file. The file should be writable by only the administrators
+    on the system. It is possible to run kubelet with the kubeconfig...'
+element3:
+  name: Ensure that the kubelet kubeconfig file ownership is set to root:root
+  requirements:
+  - 'Description: If kubelet is running, ensure that the file ownership of its kubeconfig
+    file is set to root:root.'
+  - 'Rationale: The kubeconfig file for kubelet controls various parameters for the
+    kubelet service in the worker node. You should set its file ownership to maintain
+    the integrity of the file. The file should be owned by root:root.'
+element4:
+  name: Ensure that the kubelet configuration file has permissions set to 644 or more
+    restrictive
+  requirements:
+  - 'Description: Ensure that if the kubelet refers to a configuration file with the
+    --config argument, that file has permissions of 644 or more restrictive.'
+  - 'Rationale: The kubelet reads various parameters, including security settings,
+    from a config file specified by the --config argument. If this file is specified
+    you should restrict its file permissions to maintain the integrity of the file.
+    The file should be writable by only the administrators on the system.'
+element5:
+  name: Ensure that the kubelet configuration file ownership is set to root:root
+  requirements:
+  - 'Description: Ensure that if the kubelet refers to a configuration file with the
+    --config argument, that file is owned by root:root.'
+  - 'Rationale: The kubelet reads various parameters, including security settings,
+    from a config file specified by the --config argument. If this file is specified
+    you should restrict its file permissions to maintain the integrity of the file.
+    The file should be writable by only the administrators on the system.'
+element6:
+  name: Ensure that the Anonymous Auth is Not Enabled
+  requirements:
+  - 'Description: Disable anonymous requests to the Kubelet server.'
+  - 'Rationale: When enabled, requests that are not rejected by other configured authentication
+    methods are treated as anonymous requests. These requests are then served by the
+    Kubelet server. You should rely on authentication to authorize access and disallow
+    anonymous requests.'
+  - 'Impact: Anonymous requests will be rejected.'
+element7:
+  name: Ensure that the --authorization-mode argument is not set to AlwaysAllow
+  requirements:
+  - 'Description: Do not allow all requests. Enable explicit authorization.'
+  - 'Rationale: Kubelets can be configured to allow all authenticated requests (even
+    anonymous ones) without needing explicit authorization checks from the apiserver.
+    You should restrict this behavior and only allow explicitly authorized requests.'
+  - 'Impact: Unauthorized requests will be denied.'
+element8:
+  name: Ensure that a Client CA File is Configured
+  requirements:
+  - 'Description: Enable Kubelet authentication using certificates.'
+  - 'Rationale: The connections from the apiserver to the kubelet are used for fetching
+    logs for pods, attaching (through kubectl) to running pods, and using the kubelet’s
+    port-forwarding functionality. These connections terminate at the kubelet’s HTTPS
+    endpoint. By default, the apiserver does not verify the...'
+  - 'Impact: You require TLS to be configured on apiserver as well as kubelets.'
+element9:
+  name: Ensure that the --read-only-port is disabled
+  requirements:
+  - 'Description: Disable the read-only port.'
+  - 'Rationale: The Kubelet process provides a read-only API in addition to the main
+    Kubelet API. Unauthenticated access is provided to this read-only API which could
+    possibly retrieve potentially sensitive information about the cluster.'
+  - 'Impact: Removal of the read-only port will require that any service which made
+    use of it will need to be re-configured to use the main Kubelet API.'
+element10:
+  name: Ensure that the --streaming-connection-idle-timeout argument is not set to
+    0
+  requirements:
+  - 'Description: Do not disable timeouts on streaming connections.'
+  - 'Rationale: Setting idle timeouts ensures that you are protected against Denial-of-Service
+    attacks, inactive connections and running out of ephemeral ports. Note: By default,
+    --streaming-connection-idle-timeout is set to 4 hours which might be too high
+    for your environment. Setting this as appropriate would...'
+  - 'Impact: Long-lived connections could be interrupted.'
+element11:
+  name: Ensure that the --protect-kernel-defaults argument is set to true
+  requirements:
+  - 'Description: Protect tuned kernel parameters from overriding kubelet default
+    kernel parameter values.'
+  - 'Rationale: Kernel parameters are usually tuned and hardened by the system administrators
+    before putting the systems into production. These parameters protect the kernel
+    and the system. Your kubelet kernel defaults that rely on such parameters should
+    be appropriately set to match the desired secured system...'
+  - 'Impact: You would have to re-tune kernel parameters to match kubelet parameters.'
+element12:
+  name: Ensure that the --make-iptables-util-chains argument is set to true
+  requirements:
+  - 'Description: Allow Kubelet to manage iptables.'
+  - 'Rationale: Kubelets can automatically manage the required changes to iptables
+    based on how you choose your networking options for the pods. It is recommended
+    to let kubelets manage the changes to iptables. This ensures that the iptables
+    configuration remains in sync with pods networking configuration....'
+  - 'Impact: Kubelet would manage the iptables on the system and keep it in sync.
+    If you are using any other iptables management solution, then there might be some
+    conflicts.'
+element13:
+  name: Ensure that the --hostname-override argument is not set
+  requirements:
+  - 'Description: Do not override node hostnames.'
+  - 'Rationale: Overriding hostnames could potentially break TLS setup between the
+    kubelet and the apiserver. Additionally, with overridden hostnames, it becomes
+    increasingly difficult to associate logs with a particular node and process them
+    for security analytics. Hence, you should setup your kubelet nodes with...'
+  - 'Impact: --hostname-override may not take when the kubelet also has --cloud-provider
+    aws'
+element14:
+  name: Ensure that the --eventRecordQPS argument is set to 0 or a level which ensures
+    appropriate event capture
+  requirements:
+  - 'Description: Security relevant information should be captured. The --eventRecordQPS
+    flag on the Kubelet can be used to limit the rate at which events are gathered.
+    Setting this too low could result in relevant events not being logged, however
+    the unlimited setting of 0 could result in a denial of service on the...'
+  - 'Rationale: It is important to capture all events and not restrict event creation.
+    Events are an important source of security information and analytics that ensure
+    that your environment is consistently monitored using the event data.'
+  - 'Impact: Setting this parameter to 0 could result in a denial of service condition
+    due to excessive events being created. The cluster''s event processing and storage
+    systems should be scaled to handle expected event loads.'
+element15:
+  name: Ensure that the --rotate-certificates argument is not present or is set to
+    true
+  requirements:
+  - 'Description: Enable kubelet client certificate rotation.'
+  - 'Rationale: The --rotate-certificates setting causes the kubelet to rotate its
+    client certificates by creating new CSRs as its existing credentials expire. This
+    automated periodic rotation ensures that the there is no downtime due to expired
+    certificates and thus addressing availability in the CIA...'
+element16:
+  name: Ensure that the RotateKubeletServerCertificate argument is set to true
+  requirements:
+  - 'Description: Enable kubelet server certificate rotation.'
+  - 'Rationale: RotateKubeletServerCertificate causes the kubelet to both request
+    a serving certificate after bootstrapping its client credentials and rotate the
+    certificate as its existing credentials expire. This automated periodic rotation
+    ensures that the there are no downtimes due to expired certificates and...'
+element17:
+  name: Prefer using a container-optimized OS when possible
+  requirements:
+  - 'Description: A container-optimized OS is an operating system image that is designed
+    for secure managed hosting of containers on compute instances. Use cases for container-optimized
+    OSes might include: • Docker container or Kubernetes support with minimal setup.
+    • A small-secure container footprint. • An OS that...'
+  - 'Rationale: Container-optimized OSes have a smaller footprint which will reduce
+    the instance''s potential attack surface. The container runtime is pre-installed
+    and security settings like locked-down firewall is configured by default. Container-optimized
+    images may also be configured to automatically update on...'
+  - 'Impact: A container-optimized OS may have limited or no support for package managers,
+    execution of non-containerized applications, or ability to install third-party
+    drivers or kernel modules. Conventional remote access to the host (i.e. ssh) may
+    not be possible, with access and debugging being intended via...'
+element18:
+  name: Ensure that the cluster-admin role is only used where required
+  requirements:
+  - 'Description: The RBAC role cluster-admin provides wide-ranging powers over the
+    environment and should be used only where and when needed.'
+  - 'Rationale: Kubernetes provides a set of default roles where RBAC is used. Some
+    of these roles such as cluster-admin provide wide-ranging privileges which should
+    only be applied where absolutely necessary. Roles such as cluster-admin allow
+    super-user access to perform any action on any resource. When used in a...'
+  - 'Impact: Care should be taken before removing any clusterrolebindings from the
+    environment to ensure they were not required for operation of the cluster. Specifically,
+    modifications should not be made to clusterrolebindings with the system: prefix
+    as they are required for the operation of system components.'
+element19:
+  name: Minimize access to secrets
+  requirements:
+  - 'Description: The Kubernetes API stores secrets, which may be service account
+    tokens for the Kubernetes API or credentials used by workloads in the cluster.
+    Access to these secrets should be restricted to the smallest possible group of
+    users to reduce the risk of privilege escalation.'
+  - 'Rationale: Inappropriate access to secrets stored within the Kubernetes cluster
+    can allow for an attacker to gain additional access to the Kubernetes cluster
+    or external resources whose credentials are stored as secrets.'
+  - 'Impact: Care should be taken not to remove access to secrets to system components
+    which require this for their operation'
+element20:
+  name: Minimize wildcard use in Roles and ClusterRoles
+  requirements:
+  - 'Description: Kubernetes Roles and ClusterRoles provide access to resources based
+    on sets of objects and actions that can be taken on those objects. It is possible
+    to set either of these to be the wildcard "*" which matches all items. Use of
+    wildcards is not optimal from a security perspective as it may allow...'
+  - 'Rationale: The principle of least privilege recommends that users are provided
+    only the access required for their role and nothing more. The use of wildcard
+    rights grants is likely to provide excessive rights to the Kubernetes API.'
+element21:
+  name: Minimize access to create pods
+  requirements:
+  - 'Description: The ability to create pods in a namespace can provide a number of
+    opportunities for privilege escalation, such as assigning privileged service accounts
+    to these pods or mounting hostPaths with access to sensitive data (unless Pod
+    Security Policies are implemented to restrict this access) As such,...'
+  - 'Rationale: The ability to create pods in a cluster opens up possibilities for
+    privilege escalation and should be restricted, where possible.'
+  - 'Impact: Care should be taken not to remove access to pods to system components
+    which require this for their operation'
+element22:
+  name: Ensure that default service accounts are not actively used.
+  requirements:
+  - 'Description: The default service account should not be used to ensure that rights
+    granted to applications can be more easily audited and reviewed.'
+  - 'Rationale: Kubernetes provides a default service account which is used by cluster
+    workloads where no specific service account is assigned to the pod. Where access
+    to the Kubernetes API from a pod is required, a specific service account should
+    be created for that pod, and rights granted to that service...'
+  - 'Impact: All workloads which require access to the Kubernetes API will require
+    an explicit service account to be created.'
+element23:
+  name: Ensure that Service Account Tokens are only mounted where necessary
+  requirements:
+  - 'Description: Service accounts tokens should not be mounted in pods except where
+    the workload running in the pod explicitly needs to communicate with the API server'
+  - 'Rationale: Mounting service account tokens inside pods can provide an avenue
+    for privilege escalation attacks where an attacker is able to compromise a single
+    pod in the cluster. Avoiding mounting these tokens removes this attack avenue.'
+  - 'Impact: Pods mounted without service account tokens will not be able to communicate
+    with the API server, except where the resource is available to unauthenticated
+    principals.'
+element24:
+  name: Avoid use of system:masters group
+  requirements:
+  - 'Description: The special group system:masters should not be used to grant permissions
+    to any user or service account, except where strictly necessary (e.g. bootstrapping
+    access prior to RBAC being fully available)'
+  - 'Rationale: The system:masters group has unrestricted access to the Kubernetes
+    API hard-coded into the API server source code. An authenticated user who is a
+    member of this group cannot have their access reduced, even if all bindings and
+    cluster role bindings which mention it, are removed. When combined with...'
+  - 'Impact: Once the RBAC system is operational in a cluster system:masters should
+    not be specifically required, as ordinary bindings from principals to the cluster-admin
+    cluster role can be made where unrestricted access is required.'
+element25:
+  name: Limit use of the Bind, Impersonate and Escalate permissions in the Kubernetes
+    cluster
+  requirements:
+  - 'Description: Cluster roles and roles with the impersonate, bind or escalate permissions
+    should not be granted unless strictly required. Each of these permissions allow
+    a particular subject to escalate their privileges beyond those explicitly granted
+    by cluster administrators'
+  - 'Rationale: The impersonate privilege allows a subject to impersonate other users
+    gaining their rights to the cluster. The bind privilege allows the subject to
+    add a binding to a cluster role or role which escalates their effective permissions
+    in the cluster. The escalate privilege allows a subject to modify...'
+  - 'Impact: There are some cases where these permissions are required for cluster
+    service operation, and care should be taken before removing these permissions
+    from system service accounts.'
+element26:
+  name: Minimize the admission of privileged containers
+  requirements:
+  - 'Description: Do not generally permit containers to be run with the securityContext.privileged
+    flag set to true.'
+  - 'Rationale: Privileged containers have access to all Linux Kernel capabilities
+    and devices. A container running with full privileges can do almost everything
+    that the host can do. This flag exists to allow special use-cases, like manipulating
+    the network stack and accessing devices. There should be at least...'
+  - 'Impact: Pods defined with spec.containers[].securityContext.privileged: true
+    will not be permitted.'
+element27:
+  name: Minimize the admission of containers wishing to share the host process ID
+    namespace
+  requirements:
+  - 'Description: Do not generally permit containers to be run with the hostPID flag
+    set to true.'
+  - 'Rationale: A container running in the host''s PID namespace can inspect processes
+    running outside the container. If the container also has access to ptrace capabilities
+    this can be used to escalate privileges outside of the container. There should
+    be at least one PodSecurityPolicy (PSP) defined which does not...'
+  - 'Impact: Pods defined with spec.hostPID: true will not be permitted unless they
+    are run under a specific PSP.'
+element28:
+  name: Minimize the admission of containers wishing to share the host IPC namespace
+  requirements:
+  - 'Description: Do not generally permit containers to be run with the hostIPC flag
+    set to true.'
+  - 'Rationale: A container running in the host''s IPC namespace can use IPC to interact
+    with processes outside the container. There should be at least one PodSecurityPolicy
+    (PSP) defined which does not permit containers to share the host IPC namespace.
+    If you have a requirement to containers which require hostIPC,...'
+  - 'Impact: Pods defined with spec.hostIPC: true will not be permitted unless they
+    are run under a specific PSP.'
+element29:
+  name: Minimize the admission of containers wishing to share the host network namespace
+  requirements:
+  - 'Description: Do not generally permit containers to be run with the hostNetwork
+    flag set to true.'
+  - 'Rationale: A container running in the host''s network namespace could access
+    the local loopback device, and could access network traffic to and from other
+    pods. There should be at least one PodSecurityPolicy (PSP) defined which does
+    not permit containers to share the host network namespace. If you have need to...'
+  - 'Impact: Pods defined with spec.hostNetwork: true will not be permitted unless
+    they are run under a specific PSP.'
+element30:
+  name: Minimize the admission of containers with allowPrivilegeEscalation
+  requirements:
+  - 'Description: Do not generally permit containers to be run with the allowPrivilegeEscalation
+    flag set to true.'
+  - 'Rationale: A container running with the allowPrivilegeEscalation flag set to
+    true may have processes that can gain more privileges than their parent. There
+    should be at least one PodSecurityPolicy (PSP) defined which does not permit containers
+    to allow privilege escalation. The option exists (and is defaulted...'
+  - 'Impact: Pods defined with spec.allowPrivilegeEscalation: true will not be permitted
+    unless they are run under a specific PSP.'
+element31:
+  name: Minimize the admission of root containers
+  requirements:
+  - 'Description: Do not generally permit containers to be run as the root user.'
+  - 'Rationale: Containers may run as any Linux user. Containers which run as the
+    root user, whilst constrained by Container Runtime security features still have
+    a escalated likelihood of container breakout. Ideally, all containers should run
+    as a defined non-UID 0 user. There should be at least one...'
+  - 'Impact: Pods with containers which run as the root user will not be permitted.'
+element32:
+  name: Minimize the admission of containers with added capabilities
+  requirements:
+  - 'Description: Do not generally permit containers with capabilities assigned beyond
+    the default set.'
+  - 'Rationale: Containers run with a default set of capabilities as assigned by the
+    Container Runtime. Capabilities outside this set can be added to containers which
+    could expose them to risks of container breakout attacks. There should be at least
+    one PodSecurityPolicy (PSP) defined which prevents containers...'
+  - 'Impact: Pods with containers which require capabilities outwith the'
+element33:
+  name: Minimize the admission of containers with capabilities assigned
+  requirements:
+  - 'Description: Do not generally permit containers with capabilities'
+  - 'Rationale: Containers run with a default set of capabilities as assigned by the
+    Container Runtime. Capabilities are parts of the rights generally granted on a
+    Linux system to the root user. In many cases applications running in containers
+    do not require any capabilities to operate, so from the perspective of...'
+  - 'Impact: Pods with containers require capabilities to operate will not be permitted.'
+element34:
+  name: Ensure CNI plugin supports network policies.
+  requirements:
+  - 'Description: There are a variety of CNI plugins available for Kubernetes. If
+    the CNI in use does not support Network Policies it may not be possible to effectively
+    restrict traffic in the cluster.'
+  - 'Rationale: Kubernetes network policies are enforced by the CNI plugin in use.
+    As such it is important to ensure that the CNI plugin supports both Ingress and
+    Egress network policies.'
+element35:
+  name: Ensure that all Namespaces have Network Policies defined
+  requirements:
+  - 'Description: Use network policies to isolate traffic in your cluster network.'
+  - 'Rationale: Running different applications on the same Kubernetes cluster creates
+    a risk of one compromised application attacking a neighboring application. Network
+    segmentation is important to ensure that containers can communicate only with
+    those they are supposed to. A network policy is a specification of...'
+  - 'Impact: Once there is any Network Policy in a namespace selecting a particular
+    pod, that pod will reject any connections that are not allowed by any Network
+    Policy. Other pods in the namespace that are not selected by any Network Policy
+    will continue to accept all traffic"'
+element36:
+  name: Prefer using secrets as files over secrets as environment variables
+  requirements:
+  - 'Description: Kubernetes supports mounting secrets as data volumes or as environment
+    variables. Minimize the use of environment variable secrets.'
+  - 'Rationale: It is reasonably common for application code to log out its environment
+    (particularly in the event of an error). This will include any secret values passed
+    in as environment variables, so secrets can easily be exposed to any user or entity
+    who has access to the logs.'
+  - 'Impact: Application code which expects to read secrets in the form of environment
+    variables would need modification'
+element37:
+  name: Consider external secret storage
+  requirements:
+  - 'Description: Consider the use of an external secrets storage and management system,
+    instead of using Kubernetes Secrets directly, if you have more complex secret
+    management needs. Ensure the solution requires authentication to access secrets,
+    has auditing of access to and use of secrets, and encrypts secrets....'
+  - 'Rationale: Kubernetes supports secrets as first-class objects, but care needs
+    to be taken to ensure that access to secrets is carefully limited. Using an external
+    secrets provider can ease the management of access to secrets, especially where
+    secrests are used across both Kubernetes and non-Kubernetes...'
+element38:
+  name: Create administrative boundaries between resources using namespaces
+  requirements:
+  - 'Description: Use namespaces to isolate your Kubernetes objects.'
+  - 'Rationale: Limiting the scope of user permissions can reduce the'
+  - 'Impact: of mistakes or malicious activities. A Kubernetes namespace allows you
+    to partition created resources into logically named groups. Resources created
+    in one namespace can be hidden from other namespaces. By default, each resource
+    created by a user in an Amazon EKS cluster runs in a'
+element39:
+  name: Apply Security Context to Your Pods and Containers
+  requirements:
+  - 'Description: Apply Security Context to Your Pods and Containers'
+  - 'Rationale: A security context defines the operating system security settings
+    (uid, gid, capabilities, SELinux role, etc..) applied to a container. When designing
+    your containers and pods, make sure that you configure the security context for
+    your pods, containers, and volumes. A security context is a property...'
+  - 'Impact: If you incorrectly apply security contexts, you may have trouble running
+    the pods.'
+element40:
+  name: The default namespace should not be used
+  requirements:
+  - 'Description: Kubernetes provides a default namespace, where objects are placed
+    if no namespace is specified for them. Placing objects in this namespace makes
+    application of RBAC and other controls more difficult.'
+  - 'Rationale: Resources in a Kubernetes cluster should be segregated by namespace,
+    to allow for security controls to be applied at that level and to make it easier
+    to manage resources.'
+element41:
+  name: Ensure Image Vulnerability Scanning using Amazon ECR image scanning or a third
+    party provider
+  requirements:
+  - 'Description: Scan images being deployed to Amazon EKS for vulnerabilities.'
+  - 'Rationale: Vulnerabilities in software packages can be exploited by hackers or
+    malicious users to obtain unauthorized access to local cloud resources. Amazon
+    ECR and other third party products allow images to be scanned for known vulnerabilities.'
+  - 'Impact: If you are utilizing AWS ECR The following are common image scan failures.
+    You can view errors like this in the Amazon ECR console by displaying the image
+    details or through the API or AWS CLI by using the DescribeImageScanFindings API.
+    UnsupportedImageError You may get an UnsupportedImageError...'
+element42:
+  name: Minimize user access to Amazon ECR
+  requirements:
+  - 'Description: Restrict user access to Amazon ECR, limiting interaction with build
+    images to only authorized personnel and service accounts.'
+  - 'Rationale: Weak access control to Amazon ECR may allow malicious users to replace
+    built images with vulnerable containers.'
+  - 'Impact: Care should be taken not to remove access to Amazon ECR for accounts
+    that require this for their operation.'
+element43:
+  name: Minimize cluster access to read-only for Amazon ECR
+  requirements:
+  - 'Description: Configure the Cluster Service Account with Storage Object Viewer
+    Role to only allow read-only access to Amazon ECR.'
+  - 'Rationale: The Cluster Service Account does not require administrative access
+    to Amazon ECR, only requiring pull access to containers to deploy onto Amazon
+    EKS. Restricting permissions follows the principles of least privilege and prevents
+    credentials from being abused beyond the required role.'
+  - 'Impact: A separate dedicated service account may be required for use by build
+    servers and other robot users pushing or managing container images.'
+element44:
+  name: Minimize Container Registries to only those approved
+  requirements:
+  - 'Description: Use approved container registries.'
+  - 'Rationale: Allowing unrestricted access to external container registries provides
+    the opportunity for malicious or unapproved containers to be deployed into the
+    cluster. Allowlisting only approved container registries reduces this risk.'
+  - 'Impact: All container images to be deployed to the cluster must be hosted within
+    an approved container image registry.'
+element45:
+  name: Prefer using dedicated EKS Service Accounts
+  requirements:
+  - 'Description: Kubernetes workloads should not use cluster node service accounts
+    to authenticate to Amazon EKS APIs. Each Kubernetes workload that needs to authenticate
+    to other AWS services using AWS IAM should be provisioned with a dedicated Service
+    account.'
+  - 'Rationale: Manual approaches for authenticating Kubernetes workloads running
+    on Amazon EKS against AWS APIs are: storing service account keys as a Kubernetes
+    secret (which introduces manual key rotation and potential for key compromise);
+    or use of the underlying nodes'' IAM Service account, which violates the...'
+element46:
+  name: Ensure Kubernetes Secrets are encrypted using Customer Master Keys (CMKs)
+    managed in AWS KMS
+  requirements:
+  - 'Description: Encrypt Kubernetes secrets, stored in etcd, using secrets encryption
+    feature during Amazon EKS cluster creation.'
+  - 'Rationale: Kubernetes can store secrets that pods can access via a mounted volume.
+    Today, Kubernetes secrets are stored with Base64 encoding, but encrypting is the
+    recommended approach. Amazon EKS clusters version 1.13 and higher support the
+    capability of encrypting your Kubernetes secrets using AWS Key...'
+element47:
+  name: Restrict Access to the Control Plane Endpoint
+  requirements:
+  - 'Description: Enable Endpoint Private Access to restrict access to the cluster''s
+    control plane to only an allowlist of authorized IPs.'
+  - 'Rationale: Authorized networks are a way of specifying a restricted range of
+    IP addresses that are permitted to access your cluster''s control plane. Kubernetes
+    Engine uses both Transport Layer Security (TLS) and authentication to provide
+    secure access to your cluster''s control plane from the public internet....'
+  - 'Impact: When implementing Endpoint Private Access, be careful to ensure all desired
+    networks are on the allowlist (whitelist) to prevent inadvertently blocking external
+    access to your cluster''s control plane. Page 137'
+element48:
+  name: Ensure clusters are created with Private Endpoint Enabled and Public Access
+    Disabled
+  requirements:
+  - 'Description: Disable access to the Kubernetes API from outside the node network
+    if it is not required.'
+  - 'Rationale: In a private cluster, the master node has two endpoints, a private
+    and public endpoint. The private endpoint is the internal IP address of the master,
+    behind an internal load balancer in the master''s VPC network. Nodes communicate
+    with the master using the private endpoint. The public endpoint...'
+  - 'Impact: Configure the EKS cluster endpoint to be private. 1. Leave the cluster
+    endpoint public and specify which CIDR blocks can communicate with the cluster
+    endpoint. The blocks are effectively a whitelisted set of public IP addresses
+    that are allowed to access the cluster endpoint. 2. Configure public...'
+element49:
+  name: Ensure clusters are created with Private Nodes
+  requirements:
+  - 'Description: Disable public IP addresses for cluster nodes, so that they only
+    have private IP addresses. Private Nodes are nodes with no public IP addresses.'
+  - 'Rationale: Disabling public IP addresses on cluster nodes restricts access to
+    only internal networks, forcing attackers to obtain local network access before
+    attempting to compromise the underlying Kubernetes hosts.'
+  - 'Impact: To enable Private Nodes, the cluster has to also be configured with a
+    private master IP range and IP Aliasing enabled. Private Nodes do not have outbound
+    access to the public internet. If you want to provide outbound Internet access
+    for your private nodes, you can use Cloud NAT or you can manage...'
+element50:
+  name: Ensure Network Policy is Enabled and set as appropriate
+  requirements:
+  - 'Description: Amazon EKS provides two ways to implement network policy. You choose
+    a network policy option when you create an EKS cluster. The policy option can''t
+    be changed after the cluster is created: Calico Network Policies, an open-source
+    network and network security solution founded by Tigera. Both...'
+  - 'Rationale: By default, all pod to pod traffic within a cluster is allowed. Network
+    Policy creates a pod-level firewall that can be used to restrict traffic between
+    sources. Pod traffic is restricted by having a Network Policy that selects it
+    (through the use of labels). Once there is any Network Policy in a...'
+  - 'Impact: Network Policy requires the Network Policy add-on. This add-on is included
+    automatically when a cluster with Network Policy is created, but for an existing
+    cluster, needs to be added prior to enabling Network Policy. Enabling/Disabling
+    Network Policy causes a rolling update of all cluster nodes,...'
+element51:
+  name: Encrypt traffic to HTTPS load balancers with TLS certificates
+  requirements:
+  - 'Description: Encrypt traffic to HTTPS load balancers using TLS certificates.'
+  - 'Rationale: Encrypting traffic between users and your Kubernetes workload is fundamental
+    to protecting data sent over the web.'
+element52:
+  name: Manage Kubernetes RBAC users with AWS IAM Authenticator for Kubernetes
+  requirements:
+  - 'Description: Amazon EKS uses IAM to provide authentication to your Kubernetes
+    cluster through the AWS IAM Authenticator for Kubernetes. You can configure the
+    stock kubectl client to work with Amazon EKS by installing the AWS IAM Authenticator
+    for Kubernetes and modifying your kubectl configuration file to use...'
+  - 'Rationale: On- and off-boarding users is often difficult to automate and prone
+    to error. Using a single source of truth for user permissions reduces the number
+    of locations that an individual must be off-boarded from, and prevents users gaining
+    unique permissions sets that increase the cost of audit.'
+  - 'Impact: Users must now be assigned to the IAM group created to use this namespace
+    and deploy applications. If they are not they will not be able to access the namespace
+    or deploy.'
+element53:
+  name: Consider Fargate for running untrusted workloads
+  requirements:
+  - 'Description: It is Best Practice to restrict or fence untrusted workloads when
+    running in a multi-tenant environment.'

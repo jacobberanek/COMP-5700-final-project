@@ -1,0 +1,14 @@
+FilePath,Severity,Control name,Failed resources,All Resources,Compliance score
+N/A,High,List Kubernetes secrets,202,914,77.9%
+N/A,Medium,Allow privilege escalation,283,386,26.7%
+N/A,Medium,Ingress and Egress blocked,338,422,19.9%
+N/A,Medium,Administrative Roles,22,914,97.6%
+N/A,High,Host PID/IPC privileges,10,385,97.4%
+N/A,High,HostNetwork access,12,385,96.9%
+N/A,High,Insecure capabilities,8,385,97.9%
+N/A,Medium,Access container service account,688,689,0.1%
+N/A,Medium,Linux hardening,305,385,20.8%
+N/A,High,Privileged container,18,385,95.3%
+N/A,Low,Pods in default namespace,189,385,50.9%
+N/A,Low,PSP enabled,0,0,100.0%
+N/A,Medium,Workloads with excessive amount of vulnerabilities,0,0,100.0%

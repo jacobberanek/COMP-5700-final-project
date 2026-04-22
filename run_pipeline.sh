@@ -3,25 +3,25 @@
 # run_pipeline.sh  —  COMP-5700 Secure Software Process Project Runner
 #
 # Usage:
-#   ./run_pipeline.sh <pdf_dir>
+#   ./run_pipeline.sh <pdf1> <pdf2>
 #
-# Example:
-#   ./run_pipeline.sh /path/to/pdfs
-#   ./run_pipeline.sh .               # if PDFs are in the same directory
+# Examples:
+#   ./run_pipeline.sh cis-r1.pdf cis-r1.pdf
+#   ./run_pipeline.sh cis-r1.pdf cis-r2.pdf
 #
-# The directory must contain: cis-r1.pdf, cis-r2.pdf, cis-r3.pdf, cis-r4.pdf
+# Run once per input combination. The TA should run it 9 times total:
+#   ./run_pipeline.sh cis-r1.pdf cis-r1.pdf
+#   ./run_pipeline.sh cis-r1.pdf cis-r2.pdf
+#   ./run_pipeline.sh cis-r1.pdf cis-r3.pdf
+#   ./run_pipeline.sh cis-r1.pdf cis-r4.pdf
+#   ./run_pipeline.sh cis-r2.pdf cis-r2.pdf
+#   ./run_pipeline.sh cis-r2.pdf cis-r3.pdf
+#   ./run_pipeline.sh cis-r2.pdf cis-r4.pdf
+#   ./run_pipeline.sh cis-r3.pdf cis-r3.pdf
+#   ./run_pipeline.sh cis-r3.pdf cis-r4.pdf
 #
-# What this script does:
-#   Phase 1 — Task 1: Extract KDEs from each unique PDF (4 runs total)
-#               cis-r1.pdf → cis-r1-kdes.yaml
-#               cis-r2.pdf → cis-r2-kdes.yaml
-#               cis-r3.pdf → cis-r3-kdes.yaml
-#               cis-r4.pdf → cis-r4-kdes.yaml
-#
-#   Phase 2 — Tasks 2 & 3: Run all 9 input combinations using cached YAMLs
-#               r1+r1, r1+r2, r1+r3, r1+r4
-#               r2+r2, r2+r3, r2+r4
-#               r3+r3, r3+r4
+# Task-1 results are cached — if a YAML already exists for a given PDF,
+# Gemma will not re-run for that PDF.
 #
 # Requirements:
 #   - Python 3.9+
@@ -45,46 +45,71 @@ header()  { echo -e "\n${BOLD}==================================================
             echo -e "${BOLD}======================================================${RESET}"; }
 
 # ---------- argument validation ---------------------------------------------
-if [[ $# -ne 1 ]]; then
-    error "Expected exactly 1 argument: the directory containing the 4 PDF files."
+if [[ $# -ne 2 ]]; then
+    error "Expected exactly 2 arguments: two PDF file paths."
     echo ""
-    echo "Usage: $0 <pdf_dir>"
-    echo "Example: $0 ."
+    echo "Usage: $0 <pdf1> <pdf2>"
+    echo ""
+    echo "Examples:"
+    echo "  $0 cis-r1.pdf cis-r1.pdf"
+    echo "  $0 cis-r1.pdf cis-r2.pdf"
+    echo "  $0 cis-r2.pdf cis-r3.pdf"
     exit 1
 fi
 
-PDF_DIR="$(realpath "$1")"
+PDF1_POSIX="$(realpath "$1")"
+PDF2_POSIX="$(realpath "$2")"
 
 # ---------- locate project root (directory containing this script) ----------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+SCRIPT_DIR_POSIX="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR_POSIX"
+
+# ---------- convert POSIX paths to Windows paths for Python on Windows ------
+# Git Bash uses /c/Users/... but Windows Python needs C:\Users\...
+# cygpath is available in Git Bash; on true Linux/Mac this block is skipped.
+if command -v cygpath &>/dev/null; then
+    PDF1="$(cygpath -m "$PDF1_POSIX")"
+    PDF2="$(cygpath -m "$PDF2_POSIX")"
+    SCRIPT_DIR="$(cygpath -m "$SCRIPT_DIR_POSIX")"
+else
+    PDF1="$PDF1_POSIX"
+    PDF2="$PDF2_POSIX"
+    SCRIPT_DIR="$SCRIPT_DIR_POSIX"
+fi
 
 # ---------- validate PDF inputs --------------------------------------------
 header "Validating inputs"
 
-PDFS=("cis-r1.pdf" "cis-r2.pdf" "cis-r3.pdf" "cis-r4.pdf")
-for pdf in "${PDFS[@]}"; do
-    full_path="$PDF_DIR/$pdf"
-    if [[ ! -f "$full_path" ]]; then
-        error "PDF not found: $full_path"
+for pdf in "$PDF1_POSIX" "$PDF2_POSIX"; do
+    if [[ ! -f "$pdf" ]]; then
+        error "PDF not found: $pdf"
         exit 1
     fi
-    success "Found: $full_path"
+    if [[ "${pdf##*.}" != "pdf" && "${pdf##*.}" != "PDF" ]]; then
+        error "Not a PDF file: $pdf"
+        exit 1
+    fi
+    success "Found: $pdf"
 done
 
 # ---------- validate project-yamls.zip -------------------------------------
-YAMLS_ZIP="$SCRIPT_DIR/project-yamls.zip"
-if [[ ! -f "$YAMLS_ZIP" ]]; then
-    error "project-yamls.zip not found at: $YAMLS_ZIP"
+YAMLS_ZIP_POSIX="$SCRIPT_DIR_POSIX/project-yamls.zip"
+if command -v cygpath &>/dev/null; then
+    YAMLS_ZIP="$(cygpath -m "$YAMLS_ZIP_POSIX")"
+else
+    YAMLS_ZIP="$YAMLS_ZIP_POSIX"
+fi
+if [[ ! -f "$YAMLS_ZIP_POSIX" ]]; then
+    error "project-yamls.zip not found at: $YAMLS_ZIP_POSIX"
     error "Place project-yamls.zip in the same directory as this script."
     exit 1
 fi
-success "Found: $YAMLS_ZIP"
+success "Found: $YAMLS_ZIP_POSIX"
 
 # ---------- check kubescape ------------------------------------------------
 if ! command -v kubescape &>/dev/null; then
     warn "kubescape not found on PATH — Task-3 scans will fail."
-    warn "Install with: curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash"
+    warn "Install: curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash"
 else
     success "kubescape found: $(command -v kubescape)"
 fi
@@ -92,148 +117,189 @@ fi
 # ---------- virtual environment --------------------------------------------
 header "Setting up virtual environment"
 
-VENV_DIR="$SCRIPT_DIR/comp5700-venv"
+VENV_DIR_POSIX="$SCRIPT_DIR_POSIX/comp5700-venv"
 
-if [[ ! -d "$VENV_DIR" ]]; then
-    info "Creating virtual environment at $VENV_DIR ..."
-    python3 -m venv "$VENV_DIR"
+if [[ ! -d "$VENV_DIR_POSIX" ]]; then
+    info "Creating virtual environment at $VENV_DIR_POSIX ..."
+    python3 -m venv "$VENV_DIR_POSIX"
     success "Virtual environment created."
 else
-    info "Reusing existing virtual environment at $VENV_DIR"
+    info "Reusing existing virtual environment at $VENV_DIR_POSIX"
 fi
 
-# shellcheck disable=SC1091
-source "$VENV_DIR/bin/activate"
-success "Activated: $(which python3)"
+# Resolve the venv python binary directly — used for all python calls below.
+# This avoids heredoc subshells not inheriting the activated venv.
+if [[ -f "$VENV_DIR_POSIX/bin/python3" ]]; then
+    VENV_PYTHON="$VENV_DIR_POSIX/bin/python3"
+elif [[ -f "$VENV_DIR_POSIX/bin/python" ]]; then
+    VENV_PYTHON="$VENV_DIR_POSIX/bin/python"
+elif [[ -f "$VENV_DIR_POSIX/Scripts/python.exe" ]]; then
+    VENV_PYTHON="$VENV_DIR_POSIX/Scripts/python.exe"
+else
+    error "Could not find python binary in venv at $VENV_DIR_POSIX"
+    exit 1
+fi
+
+success "Using python: $VENV_PYTHON"
 
 # ---------- install dependencies -------------------------------------------
 header "Installing dependencies"
 
-REQUIREMENTS="$SCRIPT_DIR/requirements.txt"
+REQUIREMENTS="$SCRIPT_DIR_POSIX/requirements.txt"
 if [[ ! -f "$REQUIREMENTS" ]]; then
     error "requirements.txt not found at: $REQUIREMENTS"
     exit 1
 fi
 
-pip install --quiet --upgrade pip
-pip install --quiet -r "$REQUIREMENTS"
+"$VENV_PYTHON" -m pip install --quiet -r "$REQUIREMENTS"
 success "All dependencies installed."
 
-# ---------- output dirs ----------------------------------------------------
-TASK1_OUT="$SCRIPT_DIR/output/task1"
-mkdir -p "$TASK1_OUT"
+# ---------- derive stems and output paths ----------------------------------
+STEM1="$(basename "$PDF1_POSIX" .pdf)"
+STEM2="$(basename "$PDF2_POSIX" .pdf)"
+COMBO_LABEL="${STEM1}_vs_${STEM2}"
+
+TASK1_OUT_POSIX="$SCRIPT_DIR_POSIX/output/task1"
+TASK2_OUT_POSIX="$SCRIPT_DIR_POSIX/output/task2/$COMBO_LABEL"
+TASK3_OUT_POSIX="$SCRIPT_DIR_POSIX/output/task3/$COMBO_LABEL"
+
+mkdir -p "$TASK1_OUT_POSIX" "$TASK2_OUT_POSIX" "$TASK3_OUT_POSIX"
+
+# Windows-style paths for Python heredocs
+if command -v cygpath &>/dev/null; then
+    TASK1_OUT="$(cygpath -m "$TASK1_OUT_POSIX")"
+    TASK2_OUT="$(cygpath -m "$TASK2_OUT_POSIX")"
+    TASK3_OUT="$(cygpath -m "$TASK3_OUT_POSIX")"
+else
+    TASK1_OUT="$TASK1_OUT_POSIX"
+    TASK2_OUT="$TASK2_OUT_POSIX"
+    TASK3_OUT="$TASK3_OUT_POSIX"
+fi
+
+YAML1_POSIX="$TASK1_OUT_POSIX/${STEM1}-kdes.yaml"
+YAML2_POSIX="$TASK1_OUT_POSIX/${STEM2}-kdes.yaml"
+
+if [[ "$STEM1" == "$STEM2" ]]; then
+    YAML2_POSIX="$YAML1_POSIX"
+fi
+
+if command -v cygpath &>/dev/null; then
+    YAML1="$(cygpath -m "$YAML1_POSIX")"
+    YAML2="$(cygpath -m "$YAML2_POSIX")"
+else
+    YAML1="$YAML1_POSIX"
+    YAML2="$YAML2_POSIX"
+fi
+
+NAME_DIFF_TXT_POSIX="$TASK2_OUT_POSIX/name-diff_${STEM1}-kdes_vs_${STEM2}-kdes.txt"
+REQ_DIFF_TXT_POSIX="$TASK2_OUT_POSIX/req-diff_${STEM1}-kdes_vs_${STEM2}-kdes.txt"
+
+if command -v cygpath &>/dev/null; then
+    NAME_DIFF_TXT="$(cygpath -m "$NAME_DIFF_TXT_POSIX")"
+    REQ_DIFF_TXT="$(cygpath -m "$REQ_DIFF_TXT_POSIX")"
+else
+    NAME_DIFF_TXT="$NAME_DIFF_TXT_POSIX"
+    REQ_DIFF_TXT="$REQ_DIFF_TXT_POSIX"
+fi
 
 # =============================================================================
-# PHASE 1 — Task 1: Extract each unique PDF once
-# We pass each PDF as both arguments to run_task1 so it processes just that
-# one document. run_task1 saves one YAML per unique doc name, so passing the
-# same PDF twice produces exactly one YAML — the intended behaviour.
+# TASK 1 — KDE Extraction (skipped if YAML already exists)
 # =============================================================================
-header "PHASE 1 — Task 1: KDE Extraction (4 PDFs)"
+header "Task 1: KDE Extraction"
+info "PDF 1: $PDF1"
+info "PDF 2: $PDF2"
 
-for pdf in "${PDFS[@]}"; do
-    stem="${pdf%.pdf}"           # e.g. "cis-r1"
-    yaml_out="$TASK1_OUT/${stem}-kdes.yaml"
-    full_pdf="$PDF_DIR/$pdf"
-
-    if [[ -f "$yaml_out" ]]; then
-        info "Skipping $pdf — YAML already exists: $yaml_out"
-        continue
-    fi
-
-    info "Extracting KDEs from $pdf ..."
-    python3 - <<PYEOF
-import sys
-sys.path.insert(0, "$SCRIPT_DIR")
+if [[ -f "$YAML1_POSIX" ]]; then
+    info "Skipping $STEM1 — YAML already exists: $YAML1_POSIX"
+else
+    info "Extracting KDEs from $(basename "$PDF1_POSIX") ..."
+    PIPELINE_SCRIPT_DIR="$SCRIPT_DIR" \
+    PIPELINE_PDF="$PDF1" \
+    PIPELINE_OUT="$TASK1_OUT" \
+    "$VENV_PYTHON" - <<'PYEOF'
+import sys, os
+sys.path.insert(0, os.environ["PIPELINE_SCRIPT_DIR"])
 from task1_extractor import run_task1
-run_task1("$full_pdf", "$full_pdf", output_dir="$TASK1_OUT")
+run_task1(os.environ["PIPELINE_PDF"], os.environ["PIPELINE_PDF"], output_dir=os.environ["PIPELINE_OUT"])
 PYEOF
-
-    if [[ ! -f "$yaml_out" ]]; then
-        error "Task-1 did not produce expected YAML: $yaml_out"
+    if [[ ! -f "$YAML1_POSIX" ]]; then
+        error "Task-1 did not produce: $YAML1_POSIX"
         exit 1
     fi
-    success "Produced: $yaml_out"
-done
+    success "Produced: $YAML1_POSIX"
+fi
 
-echo ""
-success "Phase 1 complete — all 4 YAMLs ready in $TASK1_OUT/"
-
-# =============================================================================
-# PHASE 2 — Tasks 2 & 3: All 9 combinations
-# =============================================================================
-header "PHASE 2 — Tasks 2 & 3: All 9 input combinations"
-
-# All 9 combinations as "r1 r1", "r1 r2", etc.
-COMBINATIONS=(
-    "r1 r1"
-    "r1 r2"
-    "r1 r3"
-    "r1 r4"
-    "r2 r2"
-    "r2 r3"
-    "r2 r4"
-    "r3 r3"
-    "r3 r4"
-)
-
-COMBO_NUM=0
-TOTAL=${#COMBINATIONS[@]}
-
-for combo in "${COMBINATIONS[@]}"; do
-    COMBO_NUM=$((COMBO_NUM + 1))
-    read -r a b <<< "$combo"
-
-    YAML1="$TASK1_OUT/cis-${a}-kdes.yaml"
-    YAML2="$TASK1_OUT/cis-${b}-kdes.yaml"
-    COMBO_LABEL="${a}_vs_${b}"
-
-    TASK2_OUT="$SCRIPT_DIR/output/task2/$COMBO_LABEL"
-    TASK3_OUT="$SCRIPT_DIR/output/task3/$COMBO_LABEL"
-    mkdir -p "$TASK2_OUT" "$TASK3_OUT"
-
-    # Task-2 output filenames mirror the naming logic in task2_comparator.py
-    YAML1_STEM="cis-${a}-kdes"
-    YAML2_STEM="cis-${b}-kdes"
-    NAME_DIFF_TXT="$TASK2_OUT/name-diff_${YAML1_STEM}_vs_${YAML2_STEM}.txt"
-    REQ_DIFF_TXT="$TASK2_OUT/req-diff_${YAML1_STEM}_vs_${YAML2_STEM}.txt"
-
-    echo ""
-    echo -e "${BOLD}--- Combination $COMBO_NUM/$TOTAL: cis-${a}.pdf + cis-${b}.pdf ---${RESET}"
-
-    # ---- Task 2 --------------------------------------------------------
-    info "Running Task 2 (compare) ..."
-    python3 - <<PYEOF
-import sys
-sys.path.insert(0, "$SCRIPT_DIR")
-from task2_comparator import run_task2
-run_task2("$YAML1", "$YAML2", output_dir="$TASK2_OUT")
+if [[ "$STEM1" != "$STEM2" ]]; then
+    if [[ -f "$YAML2_POSIX" ]]; then
+        info "Skipping $STEM2 — YAML already exists: $YAML2_POSIX"
+    else
+        info "Extracting KDEs from $(basename "$PDF2_POSIX") ..."
+        PIPELINE_SCRIPT_DIR="$SCRIPT_DIR" \
+        PIPELINE_PDF="$PDF2" \
+        PIPELINE_OUT="$TASK1_OUT" \
+        "$VENV_PYTHON" - <<'PYEOF'
+import sys, os
+sys.path.insert(0, os.environ["PIPELINE_SCRIPT_DIR"])
+from task1_extractor import run_task1
+run_task1(os.environ["PIPELINE_PDF"], os.environ["PIPELINE_PDF"], output_dir=os.environ["PIPELINE_OUT"])
 PYEOF
-
-    for txt_file in "$NAME_DIFF_TXT" "$REQ_DIFF_TXT"; do
-        if [[ ! -f "$txt_file" ]]; then
-            error "Task-2 did not produce: $txt_file"
+        if [[ ! -f "$YAML2_POSIX" ]]; then
+            error "Task-1 did not produce: $YAML2_POSIX"
             exit 1
         fi
-        success "Produced: $(basename "$txt_file")"
-    done
+        success "Produced: $YAML2_POSIX"
+    fi
+fi
 
-    # ---- Task 3 --------------------------------------------------------
-    info "Running Task 3 (execute) ..."
-    python3 - <<PYEOF
-import sys
-sys.path.insert(0, "$SCRIPT_DIR")
-from task3_executor import run_task3
-run_task3("$NAME_DIFF_TXT", "$REQ_DIFF_TXT", "$YAMLS_ZIP", output_dir="$TASK3_OUT")
+# =============================================================================
+# TASK 2 — Comparison
+# =============================================================================
+header "Task 2: KDE Comparison"
+info "YAML 1: $YAML1"
+info "YAML 2: $YAML2"
+
+PIPELINE_SCRIPT_DIR="$SCRIPT_DIR" \
+PIPELINE_YAML1="$YAML1" \
+PIPELINE_YAML2="$YAML2" \
+PIPELINE_OUT="$TASK2_OUT" \
+"$VENV_PYTHON" - <<'PYEOF'
+import sys, os
+sys.path.insert(0, os.environ["PIPELINE_SCRIPT_DIR"])
+from task2_comparator import run_task2
+run_task2(os.environ["PIPELINE_YAML1"], os.environ["PIPELINE_YAML2"], output_dir=os.environ["PIPELINE_OUT"])
 PYEOF
 
-    CSV_OUT="$TASK3_OUT/kubescape_report.csv"
-    if [[ ! -f "$CSV_OUT" ]]; then
-        error "Task-3 did not produce: $CSV_OUT"
+for txt_file in "$NAME_DIFF_TXT_POSIX" "$REQ_DIFF_TXT_POSIX"; do
+    if [[ ! -f "$txt_file" ]]; then
+        error "Task-2 did not produce: $txt_file"
         exit 1
     fi
-    success "Produced: kubescape_report.csv"
+    success "Produced: $(basename "$txt_file")"
 done
+
+# =============================================================================
+# TASK 3 — Execution
+# =============================================================================
+header "Task 3: Kubescape Execution"
+
+PIPELINE_SCRIPT_DIR="$SCRIPT_DIR" \
+PIPELINE_TXT1="$NAME_DIFF_TXT" \
+PIPELINE_TXT2="$REQ_DIFF_TXT" \
+PIPELINE_ZIP="$YAMLS_ZIP" \
+PIPELINE_OUT="$TASK3_OUT" \
+"$VENV_PYTHON" - <<'PYEOF'
+import sys, os
+sys.path.insert(0, os.environ["PIPELINE_SCRIPT_DIR"])
+from task3_executor import run_task3
+run_task3(os.environ["PIPELINE_TXT1"], os.environ["PIPELINE_TXT2"], os.environ["PIPELINE_ZIP"], output_dir=os.environ["PIPELINE_OUT"])
+PYEOF
+
+CSV_OUT_POSIX="$TASK3_OUT_POSIX/kubescape_report.csv"
+if [[ ! -f "$CSV_OUT_POSIX" ]]; then
+    error "Task-3 did not produce: $CSV_OUT_POSIX"
+    exit 1
+fi
+success "Produced: $CSV_OUT_POSIX"
 
 # =============================================================================
 # Summary
@@ -241,18 +307,9 @@ done
 header "Pipeline Complete"
 
 echo ""
-echo -e "  ${BOLD}Task 1 YAMLs:${RESET}  output/task1/"
-for pdf in "${PDFS[@]}"; do
-    stem="${pdf%.pdf}"
-    echo "    ${stem}-kdes.yaml"
-done
-
+echo -e "  ${BOLD}Input:${RESET}   $(basename "$PDF1_POSIX")  +  $(basename "$PDF2_POSIX")"
+echo -e "  ${BOLD}Task 1:${RESET}  $TASK1_OUT_POSIX/"
+echo -e "  ${BOLD}Task 2:${RESET}  $TASK2_OUT_POSIX/"
+echo -e "  ${BOLD}Task 3:${RESET}  $TASK3_OUT_POSIX/"
 echo ""
-echo -e "  ${BOLD}Tasks 2 & 3 (per combination):${RESET}"
-for combo in "${COMBINATIONS[@]}"; do
-    read -r a b <<< "$combo"
-    echo "    output/task2/${a}_vs_${b}/   output/task3/${a}_vs_${b}/"
-done
-
-echo ""
-success "All tasks completed successfully."
+success "Done."

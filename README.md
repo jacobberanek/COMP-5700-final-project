@@ -53,12 +53,30 @@ cis-r4.pdf
 project-yamls.zip
 ```
 
-### Step 3 — Run the pipeline
+### Step 3 - Running the full pipeline
 
-**Mac/Linux:**
+**Usage:**
 ```bash
 chmod +x run_pipeline.sh
-./run_pipeline.sh .
+./run_pipeline.sh  
+```
+
+**WSL users:** If you see `/usr/bin/env: 'bash\r': No such file or directory`, run `sed -i 's/\r//' run_pipeline.sh` once before executing the script.
+
+Run once per input combination. The TA should run it 9 times total:
+```bash
+./run_pipeline.sh cis-r1.pdf cis-r1.pdf
+./run_pipeline.sh cis-r1.pdf cis-r2.pdf
+./run_pipeline.sh cis-r1.pdf cis-r3.pdf
+./run_pipeline.sh cis-r1.pdf cis-r4.pdf
+./run_pipeline.sh cis-r2.pdf cis-r2.pdf
+./run_pipeline.sh cis-r2.pdf cis-r3.pdf
+./run_pipeline.sh cis-r2.pdf cis-r4.pdf
+./run_pipeline.sh cis-r3.pdf cis-r3.pdf
+./run_pipeline.sh cis-r3.pdf cis-r4.pdf
+```
+
+Task-1 results are cached — if a YAML already exists for a given PDF, Gemma will not re-run for it. So running all 9 combinations only requires 4 Gemma extractions total.
 ```
 
 ### Running the test suite only (no PDFs or kubescape needed)

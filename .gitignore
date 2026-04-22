@@ -9,8 +9,6 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Output files
-output/
 
 # OS files
 .DS_Store
