@@ -1,0 +1,18 @@
+# Virtual environment
+comp5700-venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Output files
+output/
+
+# OS files
+.DS_Store
+Thumbs.db
+EOF

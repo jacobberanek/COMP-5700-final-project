@@ -1,0 +1,13 @@
+# Core
+PyYAML
+pandas
+torch
+transformers
+accelerate
+
+# PDF
+PyPDF2
+
+# Testing
+pytest
+
