@@ -635,7 +635,7 @@ def run_task1(pdf1: str, pdf2: str, output_dir: str = "output"):
 
     # ---- Step 4: Save collected outputs ----
     print(f"\n>> STEP 4/4: Saving collected LLM outputs")
-    output_txt = os.path.join(output_dir, "llm_outputs.txt")
+    output_txt = output_txt = os.path.join(output_dir, f"{os.path.splitext(os.path.basename(pdf1))[0]}-llm_outputs.txt")
     collect_llm_outputs(all_results, output_txt)
 
     # ---- Summary ----
