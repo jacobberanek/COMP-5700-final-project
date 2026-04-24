@@ -1,13 +1,12 @@
 # Core
-PyYAML
-pandas
-torch
-transformers
-accelerate
+PyYAML==6.0.3
+pandas==3.0.2
+torch==2.11.0
+transformers==5.5.4
+accelerate==1.13.0
 
 # PDF
-PyPDF2
+PyPDF2==3.0.1
 
 # Testing
-pytest
-
+pytest==9.0.3
